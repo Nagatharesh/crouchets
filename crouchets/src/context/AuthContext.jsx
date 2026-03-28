@@ -1,73 +1,77 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 
 const AuthContext = createContext();
+
 export const useAuth = () => useContext(AuthContext);
 
 export const AuthProvider = ({ children }) => {
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [user, setUser] = useState(null);
-  const [isAdmin, setIsAdmin] = useState(false);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const storedUser = localStorage.getItem('crouchets_user');
-    if (storedUser) {
-      const parsed = JSON.parse(storedUser);
-      setUser(parsed);
-      if (parsed.email === 'admin@crouchets.com') {
-        setIsAdmin(true);
+    // Check localStorage for session on mount
+    const session = localStorage.getItem('crouchets_session');
+    if (session) {
+      try {
+        const data = JSON.parse(session);
+        // Session expires after 24 hours (24 * 60 * 60 * 1000 ms)
+        if (Date.now() - data.time < 86400000) {
+          setIsAuthenticated(true);
+          setUser(data.user);
+        } else {
+          localStorage.removeItem('crouchets_session');
+        }
+      } catch (e) {
+        localStorage.removeItem('crouchets_session');
       }
     }
     setLoading(false);
   }, []);
 
-  const login = (email, password) => {
-    if (email === 'admin@crouchets.com' && password === 'admin123') {
-      const adminUser = { id: 'admin', name: 'Admin', email: 'admin@crouchets.com', role: 'admin' };
-      setUser(adminUser);
-      setIsAdmin(true);
-      localStorage.setItem('crouchets_user', JSON.stringify(adminUser));
-      return { success: true };
-    }
-
-    const users = JSON.parse(localStorage.getItem('crouchets_users') || '[]');
-    const existingUser = users.find(u => u.email === email && u.password === password);
-    
-    if (existingUser) {
-      const { password: _, ...userWithoutPass } = existingUser;
-      setUser(userWithoutPass);
-      setIsAdmin(false);
-      localStorage.setItem('crouchets_user', JSON.stringify(userWithoutPass));
-      return { success: true };
-    }
-    return { success: false, message: 'Invalid credentials' };
+  // Backwards compatibility for the existing AdminLogin.jsx
+  const login = (username, password) => {
+    return loginAdmin(username, password);
   };
 
-  const register = (name, email, password) => {
-    const users = JSON.parse(localStorage.getItem('crouchets_users') || '[]');
-    if (users.find(u => u.email === email)) {
-      return { success: false, message: 'Email already exists' };
+  const loginAdmin = (username, password) => {
+    // Hardcoded credentials
+    if (username === 'crouchets_admin' && password === 'crochet@2024') {
+      const sessionData = { 
+        time: Date.now(), 
+        user: { role: 'admin', name: 'Admin', email: 'admin@crouchets.com' } 
+      };
+      localStorage.setItem('crouchets_session', JSON.stringify(sessionData));
+      setIsAuthenticated(true);
+      setUser(sessionData.user);
+      return true;
     }
-    
-    const newUser = { id: `usr_${Date.now()}`, name, email, password, orders: [] };
-    users.push(newUser);
-    localStorage.setItem('crouchets_users', JSON.stringify(users));
-    
-    const { password: _, ...userWithoutPass } = newUser;
-    setUser(userWithoutPass);
-    setIsAdmin(false);
-    localStorage.setItem('crouchets_user', JSON.stringify(userWithoutPass));
-    return { success: true };
+    return false;
+  };
+
+  const loginUser = (email, password) => {
+    // Accept any email/password for the dummy user login
+    const sessionData = { 
+      time: Date.now(), 
+      user: { role: 'user', email: email, name: email.split('@')[0] } 
+    };
+    localStorage.setItem('crouchets_session', JSON.stringify(sessionData));
+    setIsAuthenticated(true);
+    setUser(sessionData.user);
+    return true;
   };
 
   const logout = () => {
+    localStorage.removeItem('crouchets_session');
+    setIsAuthenticated(false);
     setUser(null);
-    setIsAdmin(false);
-    localStorage.removeItem('crouchets_user');
   };
 
+  if (loading) return null;
+
   return (
-    <AuthContext.Provider value={{ user, isAdmin, loading, login, register, logout }}>
-      {!loading && children}
+    <AuthContext.Provider value={{ isAuthenticated, user, login, loginAdmin, loginUser, logout }}>
+      {children}
     </AuthContext.Provider>
   );
 };

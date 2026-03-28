@@ -1,59 +1,75 @@
 import React, { useState } from 'react';
+import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { useNavigate, Link } from 'react-router-dom';
+import { Navbar } from '../components/Navbar';
 
 export const Login = () => {
-  const { login } = useAuth();
-  const navigate = useNavigate();
-  
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
+  const { loginUser } = useAuth();
+  const navigate = useNavigate();
+  const location = useLocation();
+
+  // If the user was redirected here from Checkout, send them back after login
+  const from = location.state?.from?.pathname || '/orders';
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    const res = login(email, password);
-    if (res.success) {
-      navigate('/');
-    } else {
-      setError(res.message);
+    if (email) {
+      // Mock login always succeeds for demo
+      loginUser(email, password);
+      navigate(from, { replace: true });
     }
   };
 
   return (
-    <div className="min-h-screen bg-cream flex items-center justify-center p-6">
-      <div className="bg-white p-10 md:p-14 rounded-[2rem] shadow-xl shadow-warm/20 border border-warm/30 max-w-md w-full">
-        <h1 className="font-playfair text-4xl font-bold text-dark mb-2 text-center">Welcome Back.</h1>
-        <p className="text-mid text-center mb-8">Log in to view your orders and fast checkout.</p>
-        
-        {error && <div className="bg-red/10 text-red text-sm p-4 rounded-xl mb-6 font-medium">{error}</div>}
-        
-        <form onSubmit={handleSubmit} className="space-y-6">
-          <div>
-            <label className="block text-xs font-bold text-mid uppercase tracking-widest mb-2">Email</label>
-            <input 
-              required type="email" value={email} onChange={e => setEmail(e.target.value)}
-              className="w-full px-5 py-4 rounded-xl bg-warm/20 border border-warm/50 focus:border-teal outline-none transition-colors" 
-              placeholder="you@example.com"
-            />
+    <div className="min-h-screen bg-cream flex flex-col">
+      <Navbar />
+      <div className="flex-1 flex items-center justify-center p-6">
+        <div className="w-full max-w-md bg-white rounded-[2rem] shadow-2xl p-8 border border-warm/20">
+          <div className="text-center mb-8">
+            <h1 className="font-playfair text-3xl font-bold text-dark mb-2">Welcome Back</h1>
+            <p className="text-mid font-medium">Sign in to your Crouchets account</p>
           </div>
-          <div>
-            <label className="block text-xs font-bold text-mid uppercase tracking-widest mb-2">Password</label>
-            <input 
-              required type="password" value={password} onChange={e => setPassword(e.target.value)}
-              className="w-full px-5 py-4 rounded-xl bg-warm/20 border border-warm/50 focus:border-teal outline-none transition-colors" 
-              placeholder="••••••••"
-            />
-          </div>
+
+          <form onSubmit={handleSubmit} className="space-y-5">
+            <div>
+              <label className="block text-sm font-bold text-slate-500 mb-2 uppercase tracking-wider">Email Address</label>
+              <input 
+                required 
+                type="email" 
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className="w-full px-4 py-3 rounded-xl bg-slate-50 border border-slate-200 outline-none focus:bg-white focus:ring-2 focus:ring-teal/30 focus:border-teal/50 transition-all font-medium" 
+                placeholder="you@email.com"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-bold text-slate-500 mb-2 uppercase tracking-wider">Password</label>
+              <input 
+                required 
+                type="password" 
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="w-full px-4 py-3 rounded-xl bg-slate-50 border border-slate-200 outline-none focus:bg-white focus:ring-2 focus:ring-teal/30 focus:border-teal/50 transition-all font-medium" 
+                placeholder="••••••••"
+              />
+              <p className="text-xs text-slate-400 mt-2">*For demo purposes, any password will work.</p>
+            </div>
+
+            <button 
+              type="submit" 
+              className="w-full py-4 mt-4 bg-teal text-white rounded-xl font-bold tracking-wide shadow-lg shadow-teal/20 hover:bg-teal-700 hover:-translate-y-0.5 transition-all duration-300"
+            >
+              Sign In
+            </button>
+          </form>
           
-          <button type="submit" className="w-full py-4 bg-dark text-white rounded-xl font-bold text-lg shadow-xl shadow-dark/20 hover:bg-black transition-all">
-            Log In
-          </button>
-        </form>
-        
-        <p className="text-center text-sm text-mid mt-8">
-          Don't have an account? <Link to="/register" className="text-teal font-bold hover:underline">Register</Link>
-        </p>
+          <div className="mt-8 text-center text-sm font-medium text-slate-500">
+            Don't have an account? <span className="text-teal hover:underline cursor-pointer">Sign up (Demo)</span>
+          </div>
+        </div>
       </div>
     </div>
   );

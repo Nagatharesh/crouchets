@@ -1,73 +1,135 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useCart } from '../context/CartContext';
-import { Link } from 'react-router-dom';
-import { Trash2, Plus, Minus, ArrowRight } from 'lucide-react';
-import { motion } from 'framer-motion';
+import { useAuth } from '../context/AuthContext';
+import { Navbar } from '../components/Navbar';
+import { motion, AnimatePresence } from 'framer-motion';
 
 export const Cart = () => {
-  const { cart, updateQuantity, removeFromCart, subtotal, clearCart } = useCart();
+  const { cartItems, removeFromCart, placeOrder } = useCart();
+  const { isAuthenticated, user } = useAuth();
+  const navigate = useNavigate();
 
-  if (cart.length === 0) {
-    return (
-      <div className="min-h-[70vh] flex flex-col items-center justify-center bg-cream px-6">
-        <div className="w-24 h-24 bg-white rounded-full flex items-center justify-center shadow-sm mb-6 text-4xl text-warm">🛒</div>
-        <h2 className="font-playfair text-3xl text-dark mb-4">Your cart is empty</h2>
-        <p className="text-mid mb-8 max-w-sm text-center">Looks like you haven't added any tiny companions to your bag yet.</p>
-        <Link to="/shop" className="px-8 py-3 bg-dark text-white rounded-xl shadow-md hover:bg-black transition-colors">
-          Explore Products
-        </Link>
-      </div>
-    );
-  }
+  const total = cartItems.reduce((sum, item) => sum + (item.product.price * item.quantity), 0);
+  const isUserLoggedIn = isAuthenticated && user?.role === 'user';
+
+  const handleCheckout = () => {
+    if (!isUserLoggedIn) {
+      // Redirect to login, but remember we came from cart
+      navigate('/login', { state: { from: { pathname: '/cart' } } });
+      return;
+    }
+
+    // In a real app we'd collect address here. For demo, we use a dummy one.
+    const address = "123 Shipping Lane, Handcraft City";
+    placeOrder(address);
+    navigate('/orders'); // Send them to order tracking page
+  };
 
   return (
-    <div className="min-h-screen bg-cream py-16 px-6 lg:px-24">
-      <div className="max-w-5xl mx-auto bg-white rounded-3xl shadow-xl overflow-hidden shadow-dark/5 p-8 md:p-12 border border-warm/30">
-        <div className="flex justify-between items-end mb-10 pb-6 border-b border-warm/50">
-          <h1 className="font-playfair text-4xl text-dark">Your Cart.</h1>
-          <button onClick={clearCart} className="text-sm text-red font-semibold uppercase tracking-widest hover:underline">Clear all</button>
-        </div>
+    <div className="min-h-screen bg-slate-50">
+      <Navbar />
+      
+      <main className="max-w-6xl mx-auto px-4 py-12">
+        <h1 className="font-playfair text-3xl font-bold text-dark mb-8">Shopping Cart</h1>
 
-        <div className="space-y-8">
-          {cart.map(item => (
-            <motion.div layout key={item.id} className="flex gap-6 items-center">
-              <img src={item.images[0]} alt={item.name} className="w-24 h-24 md:w-32 md:h-32 rounded-2xl object-cover bg-warm" />
-              <div className="flex-1">
-                <p className="text-[10px] uppercase tracking-widest text-mid font-bold mb-1">{item.category}</p>
-                <h3 className="font-playfair text-xl md:text-2xl font-bold text-dark">{item.name}</h3>
-                <p className="text-teal font-medium mt-1">₹{item.price}</p>
-              </div>
-              
-              <div className="flex flex-col items-end gap-4">
-                <div className="flex items-center gap-4 bg-cream px-4 py-2 rounded-xl border border-warm/50">
-                  <button onClick={() => updateQuantity(item.id, item.quantity - 1)} className="text-mid hover:text-dark">
-                    <Minus size={16} />
-                  </button>
-                  <span className="font-bold w-4 text-center">{item.quantity}</span>
-                  <button onClick={() => updateQuantity(item.id, item.quantity + 1)} className="text-mid hover:text-dark">
-                    <Plus size={16} />
-                  </button>
-                </div>
-                <button onClick={() => removeFromCart(item.id)} className="text-mid hover:text-red transition-colors flex items-center gap-1 text-sm">
-                  <Trash2 size={16} /> Remove
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          
+          {/* Cart Items List */}
+          <div className="lg:col-span-2 bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
+            {cartItems.length === 0 ? (
+              <div className="text-center py-16">
+                <div className="text-6xl mb-4">🛒</div>
+                <h2 className="text-xl font-bold text-dark mb-2">Your cart is empty</h2>
+                <p className="text-slate-500 mb-6 font-medium">Looks like you haven't added any keychains yet.</p>
+                <button onClick={() => navigate('/shop')} className="px-6 py-2.5 bg-teal text-white rounded-lg font-bold hover:bg-teal-700 transition">
+                  Shop Now
                 </button>
               </div>
-            </motion.div>
-          ))}
-        </div>
-
-        <div className="mt-16 pt-8 border-t border-warm/50 flex flex-col md:flex-row justify-between items-center gap-6">
-          <div className="text-center md:text-left">
-            <p className="text-sm text-mid uppercase tracking-widest font-bold mb-1">Subtotal</p>
-            <p className="font-playfair text-4xl font-bold text-dark">₹{subtotal}</p>
-            <p className="text-xs text-mid mt-2">Shipping calculated at checkout.</p>
+            ) : (
+              <div className="space-y-6">
+                <AnimatePresence>
+                  {cartItems.map((item, index) => (
+                    <motion.div 
+                      key={`${item.product.id}-${index}`}
+                      layout
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, height: 0 }}
+                      className="flex gap-4 border-b border-slate-100 pb-6 last:border-0 last:pb-0"
+                    >
+                      <div className="w-24 h-24 rounded-lg overflow-hidden bg-slate-100 shrink-0 border border-slate-200">
+                        <img src={item.product.image} alt={item.product.name} className="w-full h-full object-cover" />
+                      </div>
+                      
+                      <div className="flex-1 flex flex-col">
+                        <div className="flex justify-between items-start">
+                          <div>
+                            <h3 className="font-bold text-dark sm:text-lg leading-tight">{item.product.name}</h3>
+                            <p className="text-slate-500 text-sm mt-1">Variant: <span className="font-semibold">{item.variant}</span></p>
+                          </div>
+                          <p className="font-playfair font-black text-lg text-dark">₹{item.product.price}</p>
+                        </div>
+                        
+                        <div className="mt-auto flex items-center justify-between">
+                          <div className="flex items-center gap-3">
+                            <span className="text-sm font-medium text-slate-600">Qty: {item.quantity}</span>
+                          </div>
+                          <button 
+                            onClick={() => removeFromCart(index)}
+                            className="text-sm font-bold text-red-500 hover:text-red-700 transition-colors"
+                          >
+                            Remove
+                          </button>
+                        </div>
+                      </div>
+                    </motion.div>
+                  ))}
+                </AnimatePresence>
+              </div>
+            )}
           </div>
-          
-          <Link to="/checkout" className="w-full md:w-auto px-10 py-5 bg-dark text-white rounded-2xl font-medium shadow-xl hover:bg-black transition-all flex items-center justify-center gap-3 text-lg">
-            Proceed to Checkout <ArrowRight size={20} />
-          </Link>
+
+          {/* Checkout Summary - Amazon Style Right Column */}
+          {cartItems.length > 0 && (
+            <div className="lg:col-span-1">
+              <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 sticky top-24">
+                <h3 className="text-lg font-bold text-dark mb-4 pb-4 border-b border-slate-100">Order Summary</h3>
+                
+                <div className="space-y-3 mb-6">
+                  <div className="flex justify-between text-slate-600 font-medium text-sm">
+                    <span>Items ({cartItems.length}):</span>
+                    <span>₹{total}</span>
+                  </div>
+                  <div className="flex justify-between text-slate-600 font-medium text-sm">
+                    <span>Shipping:</span>
+                    <span className="text-teal-600">Free</span>
+                  </div>
+                </div>
+
+                <div className="border-t border-slate-100 pt-4 mb-6 flex justify-between items-center">
+                  <span className="font-bold text-dark text-lg">Order Total:</span>
+                  <span className="font-playfair font-black text-2xl text-dark">₹{total}</span>
+                </div>
+
+                <button 
+                  onClick={handleCheckout}
+                  className="w-full py-4 bg-[#ffd814] hover:bg-[#f7ca00] text-black rounded-xl font-bold tracking-wide shadow-sm transition-all duration-200 border border-[#fcd200]"
+                >
+                  Proceed to Checkout
+                </button>
+                
+                {!isUserLoggedIn && (
+                  <p className="text-xs text-center font-medium text-slate-500 mt-4">
+                    You will be asked to sign in securely.
+                  </p>
+                )}
+              </div>
+            </div>
+          )}
+
         </div>
-      </div>
+      </main>
     </div>
   );
 };

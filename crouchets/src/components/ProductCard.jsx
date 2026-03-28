@@ -1,53 +1,51 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { ShoppingBag } from 'lucide-react';
-import { useCart } from '../context/CartContext';
 
-export const ProductCard = ({ product }) => {
-  const { addToCart } = useCart();
-
+export const ProductCard = ({ product, onOrder }) => {
   return (
-    <motion.div 
-      initial={{ opacity: 0, y: 20 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true }}
-      className="group relative flex flex-col bg-white rounded-3xl overflow-hidden shadow-sm hover:shadow-xl transition-shadow duration-300 border border-warm/30"
+    <motion.div
+      whileHover={{ y: -8, boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1)' }}
+      className="bg-white rounded-2xl overflow-hidden shadow-sm border border-warm/50 flex flex-col h-full transition-shadow duration-300"
     >
-      <div className="relative aspect-square overflow-hidden bg-warm/20">
+      <div className="relative aspect-square overflow-hidden bg-warm/30">
         <img 
-          src={product.images[0]} 
-          alt={product.name} 
-          className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+          src={product.image || 'https://images.unsplash.com/photo-1584062590059-00918073b64c?auto=format&fit=crop&q=80&w=400&h=400'} 
+          alt={product.name}
+          className="w-full h-full object-cover transition-transform duration-700 hover:scale-105"
         />
-        {!product.inStock && (
-          <div className="absolute top-4 left-4 bg-dark/90 text-white text-[10px] uppercase font-bold tracking-wider px-3 py-1 rounded-full">
-            Sold Out
-          </div>
-        )}
+        <div className="absolute top-4 right-4">
+          {product.inStock && product.stock > 0 ? (
+            <span className="px-3 py-1 bg-teal/10 text-teal text-xs font-semibold rounded-full backdrop-blur-md border border-teal/20">
+              In Stock
+            </span>
+          ) : (
+            <span className="px-3 py-1 bg-red/10 text-red text-xs font-semibold rounded-full backdrop-blur-md border border-red/20">
+              Out of Stock
+            </span>
+          )}
+        </div>
       </div>
       
       <div className="p-6 flex flex-col flex-grow">
         <div className="flex justify-between items-start mb-2">
-          <div>
-            <p className="text-xs text-mid uppercase tracking-widest font-semibold mb-1">{product.category}</p>
-            <h3 className="font-playfair text-xl font-medium text-dark">{product.name}</h3>
-          </div>
+          <h3 className="font-playfair text-xl font-semibold leading-tight">{product.name}</h3>
           <p className="font-sans font-medium text-dark">₹{product.price}</p>
         </div>
-        <p className="text-sm text-mid mt-2 flex-grow">{product.description}</p>
         
-        <button 
-          onClick={() => addToCart(product)}
+        <p className="text-mid text-sm mb-6 flex-grow">{product.description}</p>
+        
+        <motion.button
+          whileTap={{ scale: 0.97 }}
+          onClick={() => onOrder(product)}
           disabled={!product.inStock}
-          className={`mt-6 w-full py-3 rounded-xl font-medium flex items-center justify-center gap-2 transition-colors ${
+          className={`w-full py-3 rounded-xl font-medium transition-colors ${
             product.inStock 
-            ? 'bg-dark text-white shadow-md hover:bg-black' 
-            : 'bg-warm text-mid cursor-not-allowed'
+              ? 'bg-dark text-white hover:bg-black' 
+              : 'bg-warm text-mid cursor-not-allowed hidden'
           }`}
         >
-          <ShoppingBag size={18} />
-          {product.inStock ? 'Add to Cart' : 'Out of Stock'}
-        </button>
+          {product.inStock ? 'Order Now' : 'Sold Out'}
+        </motion.button>
       </div>
     </motion.div>
   );
