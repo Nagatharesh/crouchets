@@ -97,8 +97,16 @@ export const CartProvider = ({ children }) => {
     return newOrder;
   };
 
+  const updateOrderStatus = (orderId, newStatus) => {
+    setOrders(prev => 
+      prev.map(order => 
+        order.id === orderId ? { ...order, status: newStatus } : order
+      )
+    );
+  };
+
   return (
-    <CartContext.Provider value={{ cartItems, orders, addToCart, removeFromCart, clearCart, placeOrder }}>
+    <CartContext.Provider value={{ cartItems, orders, addToCart, removeFromCart, clearCart, placeOrder, updateOrderStatus }}>
       {children}
     </CartContext.Provider>
   );

@@ -58,7 +58,16 @@ export const Navbar = () => {
         
         {isUser ? (
           <>
+            <Link to="/user/dashboard" className="text-mid hover:text-dark transition-colors font-medium relative group">
+              Dashboard
+              <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-dark transition-all group-hover:w-full"></span>
+            </Link>
             <Link to="/orders" className="text-mid hover:text-dark transition-colors font-medium">Orders</Link>
+            <Link to="/user/profile" className="text-mid hover:text-dark transition-colors font-medium">
+              <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-purple-500 to-pink-500 flex items-center justify-center text-white text-sm font-bold">
+                {user?.name?.charAt(0).toUpperCase() || 'U'}
+              </div>
+            </Link>
             <button onClick={logout} className="text-mid hover:text-dark transition-colors font-medium cursor-pointer">Logout</button>
           </>
         ) : (

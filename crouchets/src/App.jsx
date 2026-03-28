@@ -12,6 +12,13 @@ import { Dashboard } from './pages/Dashboard';
 import { Login } from './pages/Login';
 import { Cart } from './pages/Cart';
 import { UserOrders } from './pages/UserOrders';
+import { UserDashboard } from './pages/UserDashboard';
+import { UserProfile } from './pages/UserProfile';
+
+// Admin Pages
+import { AdminProducts } from './components/admin/AdminProducts';
+import { AdminOrders } from './components/admin/AdminOrders';
+import { AdminCustomers } from './components/admin/AdminCustomers';
 
 export const App = () => {
   return (
@@ -25,9 +32,14 @@ export const App = () => {
               <Route path="/cart" element={<Cart />} />
               <Route path="/login" element={<Login />} />
               <Route path="/orders" element={<UserOrders />} />
+              <Route path="/user/dashboard" element={<UserDashboard />} />
+              <Route path="/user/profile" element={<UserProfile />} />
               
               <Route path="/admin" element={<Admin />} />
               <Route path="/admin/dashboard" element={<Dashboard />} />
+              <Route path="/admin/products" element={<AdminProducts />} />
+              <Route path="/admin/orders" element={<AdminOrders />} />
+              <Route path="/admin/customers" element={<AdminCustomers />} />
               
               {/* 404 Page */}
               <Route path="*" element={
